@@ -1,0 +1,40 @@
+name: Docker Build and Publish
+
+# This action runs every time you push code to the 'main' branch
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    # We need write permissions to push the image to GitHub Packages
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Check out your repository's code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Log in to the GitHub Container Registry (GHCR)
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # Your GitHub username
+          username: ${{ github.repository_owner }}
+          # A special token that is automatically created for the action
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Build the Docker image and push it to the registry
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          # Build from the Dockerfile in your repository root
+          context: .
+          # Push the image to the registry after building
+          push: true
+          # Tag the image with the name Unraid will use to find it
+          tags: ghcr.io/${{ github.repository_owner }}/arch-readarr-testing:latest
